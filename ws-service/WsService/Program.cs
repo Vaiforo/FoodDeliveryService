@@ -43,6 +43,7 @@ app.Map("/ws", async context =>
     {
         context.Response.StatusCode = 400;
         await context.Response.WriteAsync("Expected WebSocket request");
+        return;
     }
 
     using var ws = await context.WebSockets.AcceptWebSocketAsync();
@@ -50,6 +51,7 @@ app.Map("/ws", async context =>
 
     var seen = new HashSet<string>();
     var rnd = new Random();
+    var sendLock = new SemaphoreSlim(1, 1);
 
     var sendLoop = Task.Run(async () =>
     {
@@ -74,16 +76,18 @@ app.Map("/ws", async context =>
                 await SendTextAsync(ws, notchange, ct);
         }
     }
+    catch (OperationCanceledException) {}
+    catch (WebSocketException) {}
     finally
     {
         if (ws.State == WebSocketState.Open)
             await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "bye", CancellationToken.None);
-        
+
         try
         {
             await sendLoop;
         }
-        catch {}
+        catch { }
     }
 });
 

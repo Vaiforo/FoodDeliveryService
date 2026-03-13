@@ -25,6 +25,6 @@ ws.addEventListener("error", () => {
 });
 
 btn.addEventListener("click", () => {
-    const unique = `support:${crypto.randomUUID()}`;
+    const unique = "support:" + Math.random().toString(36).substring(2);
     ws.send(unique);
 });
